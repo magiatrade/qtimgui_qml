@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Window
 
 Rectangle {
     id: root
@@ -52,6 +53,9 @@ Rectangle {
         }
     }
 
+    // Store original parent for restoration
+    property Item originalParent: null
+
     // Mouse area for dragging
     MouseArea {
         id: dragArea
@@ -63,7 +67,15 @@ Rectangle {
         property point startPos: Qt.point(0, 0)
 
         onPressed: function(mouse) {
+            // Save original position and parent
             startPos = Qt.point(root.x, root.y)
+            root.originalParent = root.parent
+
+            // Map to window coordinates before parent change
+            var globalPos = root.mapToItem(null, 0, 0)
+            root.x = globalPos.x
+            root.y = globalPos.y
+
             root.grabToImage(function(result) {
                 root.Drag.imageSource = result.url
             })
@@ -73,15 +85,12 @@ Rectangle {
         onReleased: {
             root.Drag.drop()
             root.Drag.active = false
-            // Restore original position in layout
-            root.x = startPos.x
-            root.y = startPos.y
         }
 
         onPositionChanged: function(mouse) {
             if (pressed) {
-                // Update position for visual feedback during drag
-                var globalPos = mapToItem(root.parent, mouse.x, mouse.y)
+                // Update position in window coordinates
+                var globalPos = mapToItem(null, mouse.x, mouse.y)
                 root.x = globalPos.x - root.width / 2
                 root.y = globalPos.y - root.height / 2
             }
@@ -107,12 +116,37 @@ Rectangle {
         NumberAnimation { duration: 150 }
     }
 
-    states: State {
-        when: dragArea.drag.active
-        PropertyChanges {
-            target: root
-            scale: 1.1
-            opacity: 0.8
+    states: [
+        State {
+            name: "dragging"
+            when: dragArea.pressed
+            PropertyChanges {
+                target: root
+                scale: 1.1
+                opacity: 0.8
+                z: 1000
+            }
+            ParentChange {
+                target: root
+                parent: root.Window.contentItem
+            }
+        }
+    ]
+
+    transitions: Transition {
+        from: "dragging"
+        to: ""
+        SequentialAnimation {
+            ScriptAction {
+                script: {
+                    // Restore to original parent and position
+                    if (root.originalParent) {
+                        root.parent = root.originalParent
+                        root.x = dragArea.startPos.x
+                        root.y = dragArea.startPos.y
+                    }
+                }
+            }
         }
     }
 }
