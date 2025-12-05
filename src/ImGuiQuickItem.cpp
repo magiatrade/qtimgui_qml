@@ -1,5 +1,6 @@
 #include "ImGuiQuickItem.h"
 #include "ImGuiRenderer.h"
+#include <implot.h>
 
 #include <QQuickWindow>
 #include <QOpenGLFramebufferObject>
@@ -93,6 +94,7 @@ public:
     ~ImGuiQuickItemRenderer() override
     {
         if (g_ctx) {
+            ImPlot::DestroyContext();
             ImGui::DestroyContext(g_ctx);
         }
     }
@@ -105,6 +107,7 @@ public:
 
         g_ctx = ImGui::CreateContext();
         ImGui::SetCurrentContext(g_ctx);
+        ImPlot::CreateContext();
 
         ImGuiIO &io = ImGui::GetIO();
         io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
@@ -268,12 +271,13 @@ public:
         glEnable(GL_SCISSOR_TEST);
 
         glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height);
+        // Flip Y axis for QQuickFramebufferObject (Qt flips the FBO texture)
         const float ortho_projection[4][4] =
         {
-            { 2.0f/io.DisplaySize.x, 0.0f,                   0.0f, 0.0f },
-            { 0.0f,                  2.0f/-io.DisplaySize.y, 0.0f, 0.0f },
-            { 0.0f,                  0.0f,                  -1.0f, 0.0f },
-            {-1.0f,                  1.0f,                   0.0f, 1.0f },
+            { 2.0f/io.DisplaySize.x, 0.0f,                  0.0f, 0.0f },
+            { 0.0f,                  2.0f/io.DisplaySize.y, 0.0f, 0.0f },
+            { 0.0f,                  0.0f,                 -1.0f, 0.0f },
+            {-1.0f,                 -1.0f,                  0.0f, 1.0f },
         };
         glUseProgram(g_ShaderHandle);
         glUniform1i(g_AttribLocationTex, 0);
@@ -308,7 +312,8 @@ public:
                     if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
                         continue;
 
-                    glScissor((int)clip_min.x, (int)(fb_height - clip_max.y), (int)(clip_max.x - clip_min.x), (int)(clip_max.y - clip_min.y));
+                    // Scissor Y is flipped because we flipped the projection matrix
+                    glScissor((int)clip_min.x, (int)clip_min.y, (int)(clip_max.x - clip_min.x), (int)(clip_max.y - clip_min.y));
                     glBindTexture(GL_TEXTURE_2D, (GLuint)(size_t)pcmd->TextureId);
                     glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset + pcmd->IdxOffset);
                 }
@@ -386,6 +391,10 @@ public:
     {
         if (!m_item || !m_initialized) return;
 
+        // Clear the framebuffer before rendering
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         newFrame();
 
         // Call the render callback if set
@@ -394,6 +403,7 @@ public:
         } else {
             // Default demo UI
             ImGui::ShowDemoWindow();
+            ImPlot::ShowDemoWindow();
         }
 
         ImGui::Render();

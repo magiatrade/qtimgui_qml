@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.8.1)
+cmake_minimum_required (VERSION 3.16)
 
 # imgui library: imgui is build by default, but you can
 # provide your own version by setting QTIMGUI_BUILD_IMGUI to OFF

@@ -42,6 +42,7 @@ if(Qt6_FOUND)
         qt_imgui_quick
         PUBLIC
         imgui
+        implot
         Qt6::Gui
         Qt6::Quick
         Qt6::OpenGL
@@ -51,6 +52,7 @@ else()
         qt_imgui_quick
         PUBLIC
         imgui
+        implot
         Qt5::Gui
         Qt5::Quick
     )

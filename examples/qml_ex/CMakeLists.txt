@@ -12,34 +12,49 @@ qt_standard_project_setup(REQUIRES 6.5)
 
 # Get the root directory of qtimgui
 set(QTIMGUI_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../..)
-
-# Add imgui library
-set(IMGUI_DIR ${QTIMGUI_ROOT}/modules/imgui)
-add_library(imgui STATIC
-    ${IMGUI_DIR}/imgui.cpp
-    ${IMGUI_DIR}/imgui_demo.cpp
-    ${IMGUI_DIR}/imgui_draw.cpp
-    ${IMGUI_DIR}/imgui_tables.cpp
-    ${IMGUI_DIR}/imgui_widgets.cpp
-)
-target_include_directories(imgui PUBLIC ${IMGUI_DIR})
-
-# Add qt_imgui_quick library
 set(QTIMGUI_SRC ${QTIMGUI_ROOT}/src)
-add_library(qt_imgui_quick STATIC
-    ${QTIMGUI_SRC}/ImGuiRenderer.h
-    ${QTIMGUI_SRC}/ImGuiRenderer.cpp
-    ${QTIMGUI_SRC}/QtImGui.h
-    ${QTIMGUI_SRC}/QtImGui.cpp
-    ${QTIMGUI_SRC}/ImGuiQuickItem.h
-    ${QTIMGUI_SRC}/ImGuiQuickItem.cpp
-)
-target_include_directories(qt_imgui_quick PUBLIC ${QTIMGUI_SRC})
-target_link_libraries(qt_imgui_quick PUBLIC
-    imgui
-    Qt6::Quick
-    Qt6::OpenGL
-)
+
+# Only define imgui, implot and qt_imgui_quick if not already defined (standalone build)
+if(NOT TARGET imgui)
+    set(IMGUI_DIR ${QTIMGUI_ROOT}/modules/imgui)
+    add_library(imgui STATIC
+        ${IMGUI_DIR}/imgui.cpp
+        ${IMGUI_DIR}/imgui_demo.cpp
+        ${IMGUI_DIR}/imgui_draw.cpp
+        ${IMGUI_DIR}/imgui_tables.cpp
+        ${IMGUI_DIR}/imgui_widgets.cpp
+    )
+    target_include_directories(imgui PUBLIC ${IMGUI_DIR})
+endif()
+
+if(NOT TARGET implot)
+    set(IMPLOT_DIR ${QTIMGUI_ROOT}/modules/implot)
+    add_library(implot STATIC
+        ${IMPLOT_DIR}/implot.cpp
+        ${IMPLOT_DIR}/implot_items.cpp
+        ${IMPLOT_DIR}/implot_demo.cpp
+    )
+    target_include_directories(implot PUBLIC ${IMPLOT_DIR})
+    target_link_libraries(implot PRIVATE imgui)
+endif()
+
+if(NOT TARGET qt_imgui_quick)
+    add_library(qt_imgui_quick STATIC
+        ${QTIMGUI_SRC}/ImGuiRenderer.h
+        ${QTIMGUI_SRC}/ImGuiRenderer.cpp
+        ${QTIMGUI_SRC}/QtImGui.h
+        ${QTIMGUI_SRC}/QtImGui.cpp
+        ${QTIMGUI_SRC}/ImGuiQuickItem.h
+        ${QTIMGUI_SRC}/ImGuiQuickItem.cpp
+    )
+    target_include_directories(qt_imgui_quick PUBLIC ${QTIMGUI_SRC})
+    target_link_libraries(qt_imgui_quick PUBLIC
+        imgui
+        implot
+        Qt6::Quick
+        Qt6::OpenGL
+    )
+endif()
 
 qt_add_executable(appqml_ex
     main.cpp
@@ -71,6 +86,7 @@ target_link_libraries(appqml_ex
     Qt6::Quick
     Qt6::OpenGL
     qt_imgui_quick
+    implot
 )
 
 include(GNUInstallDirs)

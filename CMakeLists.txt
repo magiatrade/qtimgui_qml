@@ -1,10 +1,10 @@
 # minimum require
-cmake_minimum_required (VERSION 3.8.1)
+cmake_minimum_required (VERSION 3.16)
 
 # global solution
 project(qtimgui_sln)
 
-# goto subs
-add_subdirectory(examples)
+# Build order matters: modules and src must come before examples
 add_subdirectory(modules)
 add_subdirectory(src)
+add_subdirectory(examples)
