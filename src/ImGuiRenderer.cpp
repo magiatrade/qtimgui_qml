@@ -113,7 +113,8 @@ void ImGuiRenderer::renderDrawList(ImDrawData *draw_data)
     int fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
     if (fb_width == 0 || fb_height == 0)
         return;
-    draw_data->ScaleClipRects(io.DisplayFramebufferScale);
+    // Note: ScaleClipRects() is deprecated since ImGui 1.80+
+    // Clip rects are scaled in the rendering loop using draw_data->FramebufferScale
 
     // Backup GL state
     GLint last_active_texture; glGetIntegerv(GL_ACTIVE_TEXTURE, &last_active_texture);

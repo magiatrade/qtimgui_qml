@@ -1,10 +1,15 @@
 #pragma once
 
-#include <QOpenGLExtraFunctions>
 #include <QObject>
 #include <QPoint>
 #include <imgui.h>
 #include <memory>
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QOpenGLExtraFunctions>
+#else
+#include <QOpenGLExtraFunctions>
+#endif
 
 class QMouseEvent;
 class QWheelEvent;
