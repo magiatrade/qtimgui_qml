@@ -28,8 +28,14 @@ int main(int argc, char *argv[])
 
     // Set up OpenGL format
     QSurfaceFormat format;
+#ifdef __EMSCRIPTEN__
+    // WebAssembly uses WebGL (OpenGL ES 3.0)
+    format.setVersion(3, 0);
+    format.setRenderableType(QSurfaceFormat::OpenGLES);
+#else
     format.setVersion(3, 3);
     format.setProfile(QSurfaceFormat::CoreProfile);
+#endif
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
     QSurfaceFormat::setDefaultFormat(format);

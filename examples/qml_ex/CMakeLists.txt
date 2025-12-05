@@ -96,6 +96,17 @@ target_link_libraries(appqml_ex
     implot
 )
 
+# WebAssembly specific configuration
+if(EMSCRIPTEN)
+    target_link_options(appqml_ex PRIVATE
+        -sUSE_WEBGL2=1
+        -sFULL_ES3=1
+        -sALLOW_MEMORY_GROWTH=1
+        -sMAX_WEBGL_VERSION=2
+        -sMIN_WEBGL_VERSION=2
+    )
+endif()
+
 include(GNUInstallDirs)
 install(TARGETS appqml_ex
     BUNDLE DESTINATION .

@@ -19,9 +19,12 @@
 #include <QOpenGLExtraFunctions>
 #endif
 
+#if defined(ANDROID) || defined(__EMSCRIPTEN__)
+#define USE_GLSL_ES
+#endif
+
 #ifdef ANDROID
 #define GL_VERTEX_ARRAY_BINDING 0x85B5
-#define USE_GLSL_ES
 #endif
 
 #ifdef USE_GLSL_ES

@@ -6,9 +6,12 @@
 #include <QClipboard>
 #include <QCursor>
 
+#if defined(ANDROID) || defined(__EMSCRIPTEN__)
+#define USE_GLSL_ES
+#endif
+
 #ifdef ANDROID
 #define GL_VERTEX_ARRAY_BINDING           0x85B5 // Missing in android as of May 2020
-#define USE_GLSL_ES
 #endif
 
 #ifdef USE_GLSL_ES
