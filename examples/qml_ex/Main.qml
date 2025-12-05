@@ -257,31 +257,30 @@ ApplicationWindow {
 
                 property bool containsDrag: false
                 property string draggedType: ""
+            }
 
-                // Handle drop
-                DropArea {
-                    anchors.fill: parent
+            // Drop area on top of ImGui
+            DropArea {
+                id: chartDropArea
+                anchors.fill: parent
 
-                    onEntered: function(drag) {
-                        imguiItem.containsDrag = true
-                        if (drag.hasText) {
-                            imguiItem.draggedType = drag.text
-                        }
-                    }
+                onEntered: function(drag) {
+                    imguiItem.containsDrag = true
+                    console.log("Drag entered, source:", drag.source)
+                }
 
-                    onExited: {
-                        imguiItem.containsDrag = false
-                        imguiItem.draggedType = ""
-                    }
+                onExited: {
+                    imguiItem.containsDrag = false
+                    console.log("Drag exited")
+                }
 
-                    onDropped: function(drop) {
-                        imguiItem.containsDrag = false
-                        var type = drop.getDataAsString("indicatorType")
-                        if (type) {
-                            chartManager.addIndicator(type, drop.x, drop.y)
-                            console.log("Dropped indicator:", type, "at", drop.x, drop.y)
-                        }
-                        imguiItem.draggedType = ""
+                onDropped: function(drop) {
+                    imguiItem.containsDrag = false
+                    console.log("Dropped, source:", drop.source)
+                    if (drop.source && drop.source.indicatorType) {
+                        var type = drop.source.indicatorType
+                        console.log("Adding indicator:", type, "at", drop.x, drop.y)
+                        chartManager.addIndicator(type, drop.x, drop.y)
                     }
                 }
             }

@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Window
 
 Rectangle {
     id: root
@@ -16,12 +15,11 @@ Rectangle {
     color: dragArea.pressed ? Qt.darker(indicatorColor, 1.3) :
            dragArea.containsMouse ? Qt.lighter(indicatorColor, 1.1) : indicatorColor
 
-    // Drag properties
+    // Drag properties - use Internal for WebAssembly compatibility
     Drag.active: dragArea.drag.active
     Drag.hotSpot.x: width / 2
     Drag.hotSpot.y: height / 2
-    Drag.mimeData: { "indicatorType": indicatorType }
-    Drag.dragType: Drag.Automatic
+    Drag.dragType: Drag.Internal
 
     // Visual content
     Row {
@@ -53,47 +51,27 @@ Rectangle {
         }
     }
 
-    // Store original parent for restoration
-    property Item originalParent: null
-
     // Mouse area for dragging
     MouseArea {
         id: dragArea
         anchors.fill: parent
         hoverEnabled: true
+        drag.target: root
 
         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
         property point startPos: Qt.point(0, 0)
 
         onPressed: function(mouse) {
-            // Save original position and parent
             startPos = Qt.point(root.x, root.y)
-            root.originalParent = root.parent
-
-            // Map to window coordinates before parent change
-            var globalPos = root.mapToItem(null, 0, 0)
-            root.x = globalPos.x
-            root.y = globalPos.y
-
-            root.grabToImage(function(result) {
-                root.Drag.imageSource = result.url
-            })
-            root.Drag.active = true
         }
 
-        onReleased: {
+        onReleased: function(mouse) {
+            // Perform the drop
             root.Drag.drop()
-            root.Drag.active = false
-        }
-
-        onPositionChanged: function(mouse) {
-            if (pressed) {
-                // Update position in window coordinates
-                var globalPos = mapToItem(null, mouse.x, mouse.y)
-                root.x = globalPos.x - root.width / 2
-                root.y = globalPos.y - root.height / 2
-            }
+            // Reset position
+            root.x = startPos.x
+            root.y = startPos.y
         }
     }
 
@@ -119,34 +97,12 @@ Rectangle {
     states: [
         State {
             name: "dragging"
-            when: dragArea.pressed
+            when: dragArea.drag.active
             PropertyChanges {
                 target: root
-                scale: 1.1
-                opacity: 0.8
-                z: 1000
-            }
-            ParentChange {
-                target: root
-                parent: root.Window.contentItem
+                scale: 1.05
+                opacity: 0.9
             }
         }
     ]
-
-    transitions: Transition {
-        from: "dragging"
-        to: ""
-        SequentialAnimation {
-            ScriptAction {
-                script: {
-                    // Restore to original parent and position
-                    if (root.originalParent) {
-                        root.parent = root.originalParent
-                        root.x = dragArea.startPos.x
-                        root.y = dragArea.startPos.y
-                    }
-                }
-            }
-        }
-    }
 }
