@@ -58,6 +58,10 @@ endif()
 
 qt_add_executable(appqml_ex
     main.cpp
+    ChartDataManager.h
+    ChartDataManager.cpp
+    ChartRenderer.h
+    ChartRenderer.cpp
 )
 
 qt_add_qml_module(appqml_ex
@@ -65,9 +69,12 @@ qt_add_qml_module(appqml_ex
     VERSION 1.0
     QML_FILES
         Main.qml
+        IndicatorItem.qml
     SOURCES
         ${QTIMGUI_SRC}/ImGuiQuickItem.h
         ${QTIMGUI_SRC}/ImGuiQuickItem.cpp
+        ChartDataManager.h
+        ChartDataManager.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

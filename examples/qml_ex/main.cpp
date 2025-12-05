@@ -1,7 +1,25 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QQuickWindow>
 #include <QSurfaceFormat>
+
+#include "ChartDataManager.h"
+#include "ChartRenderer.h"
+
+// Global pointer for ImGuiQuickItem to access
+ChartDataManager* g_chartManager = nullptr;
+
+// Global render function for ImGuiQuickItem
+void globalImGuiRender()
+{
+    ChartRenderer::render(g_chartManager);
+}
+
+// Declare the external function pointer from ImGuiQuickItem
+namespace QtImGui {
+    extern void (*g_customRenderFunc)();
+}
 
 int main(int argc, char *argv[])
 {
@@ -18,7 +36,18 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
+    // Create the chart data manager
+    ChartDataManager chartManager;
+    g_chartManager = &chartManager;
+
+    // Set the global render function
+    QtImGui::g_customRenderFunc = globalImGuiRender;
+
     QQmlApplicationEngine engine;
+
+    // Expose chart manager to QML
+    engine.rootContext()->setContextProperty("chartManager", &chartManager);
+
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,
