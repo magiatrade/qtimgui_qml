@@ -121,6 +121,9 @@ public:
         io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
         io.BackendPlatformName = "qtimgui_qml";
 
+        // Enable docking
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
         // for (ImGuiKey key : keyMap.values()) {
         //     io.KeyMap[key] = key;
         // }

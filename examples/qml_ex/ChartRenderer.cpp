@@ -12,6 +12,9 @@ ImVec4 ChartRenderer::qColorToImVec4(const QColor& color)
 
 void ChartRenderer::render(ChartDataManager* manager)
 {
+    // Create a DockSpace over the entire viewport
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+
     if (!manager) {
         // Show placeholder when no manager
         ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver);
