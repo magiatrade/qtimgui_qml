@@ -124,10 +124,6 @@ public:
         // Enable docking
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-        // for (ImGuiKey key : keyMap.values()) {
-        //     io.KeyMap[key] = key;
-        // }
-
         io.SetClipboardTextFn = [](void *, const char *text) {
             QGuiApplication::clipboard()->setText(text);
         };

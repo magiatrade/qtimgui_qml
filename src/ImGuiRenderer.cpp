@@ -83,9 +83,6 @@ void ImGuiRenderer::initialize(WindowWrapper *window) {
     #endif
     io.BackendPlatformName = "qtimgui";
 
-    // io.RenderDrawListsFn = [](ImDrawData *drawData) {
-    //    instance()->renderDrawList(drawData);
-    // };
     io.SetClipboardTextFn = [](void *user_data, const char *text) {
         Q_UNUSED(user_data);
         QGuiApplication::clipboard()->setText(text);
