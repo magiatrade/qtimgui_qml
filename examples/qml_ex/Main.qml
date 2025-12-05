@@ -25,7 +25,10 @@ ApplicationWindow {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 8
+                anchors.leftMargin: 8
+                anchors.rightMargin: 8
+                anchors.topMargin: 8
+                anchors.bottomMargin: 32  // Space for status bar
                 spacing: 8
 
                 // Header
@@ -105,13 +108,14 @@ ApplicationWindow {
                     Layout.fillHeight: true
                 }
 
-                // Active series list
+                // Active series list with scroll
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: activeSeries.height + 20
+                    Layout.preferredHeight: Math.min(activeSeries.contentHeight + 30, 150)
                     color: "#0f3460"
                     radius: 8
                     visible: chartManager.seriesCount > 0
+                    clip: true
 
                     Column {
                         id: activeSeries
@@ -120,6 +124,8 @@ ApplicationWindow {
                         anchors.top: parent.top
                         anchors.margins: 10
                         spacing: 4
+
+                        property real contentHeight: childrenRect.height
 
                         Text {
                             text: "Active Series"
@@ -132,7 +138,7 @@ ApplicationWindow {
                             model: chartManager.seriesInfo
 
                             Rectangle {
-                                width: parent.width
+                                width: activeSeries.width
                                 height: 24
                                 radius: 4
                                 color: modelData.visible ? modelData.color : "#333"
@@ -200,6 +206,7 @@ ApplicationWindow {
                 // Clear button
                 Button {
                     Layout.fillWidth: true
+                    Layout.preferredHeight: 36
                     text: "Clear All"
                     visible: chartManager.seriesCount > 0
 
@@ -213,6 +220,7 @@ ApplicationWindow {
                         color: "white"
                         font.pixelSize: 12
                         horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                     }
 
                     onClicked: chartManager.clearAll()

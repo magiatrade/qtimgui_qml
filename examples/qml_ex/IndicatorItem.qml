@@ -57,23 +57,34 @@ Rectangle {
         id: dragArea
         anchors.fill: parent
         hoverEnabled: true
-        drag.target: parent
 
-        cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+        cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
-        onPressed: {
+        property point startPos: Qt.point(0, 0)
+
+        onPressed: function(mouse) {
+            startPos = Qt.point(root.x, root.y)
             root.grabToImage(function(result) {
                 root.Drag.imageSource = result.url
             })
+            root.Drag.active = true
         }
 
         onReleased: {
-            if (root.Drag.target) {
-                root.Drag.drop()
+            root.Drag.drop()
+            root.Drag.active = false
+            // Restore original position in layout
+            root.x = startPos.x
+            root.y = startPos.y
+        }
+
+        onPositionChanged: function(mouse) {
+            if (pressed) {
+                // Update position for visual feedback during drag
+                var globalPos = mapToItem(root.parent, mouse.x, mouse.y)
+                root.x = globalPos.x - root.width / 2
+                root.y = globalPos.y - root.height / 2
             }
-            // Reset position - Layout will handle actual placement
-            root.x = 0
-            root.y = 0
         }
     }
 
