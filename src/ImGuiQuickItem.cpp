@@ -406,17 +406,25 @@ public:
 
         newFrame();
 
-        // Call the render callback if set
-        if (m_item->renderCallback()) {
-            m_item->renderCallback();
-        } else if (g_customRenderFunc) {
-            // Use global custom render function if set
-            g_customRenderFunc();
-        } else {
-            // Default demo UI
-            ImGui::ShowDemoWindow();
-            ImPlot::ShowDemoWindow();
+        // Call the render callback if set (per-instance)
+        bool hasCallback = (bool)m_item->renderCallback();
+        bool useGlobal = m_item->useGlobalRender();
+
+        static int dbgCount = 0;
+        if (dbgCount++ % 600 == 0) {
+            QString name = m_item->objectName();
+            qDebug() << "ImGuiQuickItem::render" << name
+                     << "hasCallback=" << hasCallback
+                     << "useGlobal=" << useGlobal
+                     << "size=" << m_item->width() << "x" << m_item->height();
         }
+
+        if (hasCallback) {
+            m_item->renderCallback()();
+        } else if (useGlobal && g_customRenderFunc) {
+            g_customRenderFunc();
+        }
+        // If neither callback nor global → render nothing (black/transparent)
 
         ImGui::Render();
         renderDrawList(ImGui::GetDrawData());
@@ -494,9 +502,6 @@ private:
     bool m_initialized;
 };
 
-// Static renderer pointer for input forwarding
-static ImGuiQuickItemRenderer* s_currentRenderer = nullptr;
-
 ImGuiQuickItem::ImGuiQuickItem(QQuickItem *parent)
     : QQuickFramebufferObject(parent)
     , m_renderCallback(nullptr)
@@ -515,15 +520,13 @@ ImGuiQuickItem::ImGuiQuickItem(QQuickItem *parent)
 
 ImGuiQuickItem::~ImGuiQuickItem()
 {
-    if (s_currentRenderer) {
-        s_currentRenderer = nullptr;
-    }
+    m_renderer = nullptr;
 }
 
 QQuickFramebufferObject::Renderer *ImGuiQuickItem::createRenderer() const
 {
     auto renderer = new ImGuiQuickItemRenderer();
-    s_currentRenderer = renderer;
+    const_cast<ImGuiQuickItem*>(this)->setRenderer(renderer);
     return renderer;
 }
 
@@ -535,15 +538,15 @@ void ImGuiQuickItem::setRenderCallback(RenderCallback callback)
 void ImGuiQuickItem::mousePressEvent(QMouseEvent *event)
 {
     forceActiveFocus();
-    if (s_currentRenderer) {
+    if (m_renderer) {
         int button = 0;
         if (event->button() == Qt::RightButton) button = 1;
         else if (event->button() == Qt::MiddleButton) button = 2;
-        s_currentRenderer->setMousePressed(button, true);
+        m_renderer->setMousePressed(button, true);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        s_currentRenderer->setMousePos(event->position());
+        m_renderer->setMousePos(event->position());
 #else
-        s_currentRenderer->setMousePos(event->localPos());
+        m_renderer->setMousePos(event->localPos());
 #endif
     }
     update();
@@ -551,15 +554,15 @@ void ImGuiQuickItem::mousePressEvent(QMouseEvent *event)
 
 void ImGuiQuickItem::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (s_currentRenderer) {
+    if (m_renderer) {
         int button = 0;
         if (event->button() == Qt::RightButton) button = 1;
         else if (event->button() == Qt::MiddleButton) button = 2;
-        s_currentRenderer->setMousePressed(button, false);
+        m_renderer->setMousePressed(button, false);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        s_currentRenderer->setMousePos(event->position());
+        m_renderer->setMousePos(event->position());
 #else
-        s_currentRenderer->setMousePos(event->localPos());
+        m_renderer->setMousePos(event->localPos());
 #endif
     }
     update();
@@ -567,11 +570,11 @@ void ImGuiQuickItem::mouseReleaseEvent(QMouseEvent *event)
 
 void ImGuiQuickItem::mouseMoveEvent(QMouseEvent *event)
 {
-    if (s_currentRenderer) {
+    if (m_renderer) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        s_currentRenderer->setMousePos(event->position());
+        m_renderer->setMousePos(event->position());
 #else
-        s_currentRenderer->setMousePos(event->localPos());
+        m_renderer->setMousePos(event->localPos());
 #endif
     }
     update();
@@ -584,7 +587,7 @@ void ImGuiQuickItem::mouseDoubleClickEvent(QMouseEvent *event)
 
 void ImGuiQuickItem::wheelEvent(QWheelEvent *event)
 {
-    if (s_currentRenderer) {
+    if (m_renderer) {
         float x = 0, y = 0;
         if (event->pixelDelta().x() != 0) {
             x = event->pixelDelta().x() / 120.0f;
@@ -596,34 +599,34 @@ void ImGuiQuickItem::wheelEvent(QWheelEvent *event)
         } else {
             y = event->angleDelta().y() / 120.0f;
         }
-        s_currentRenderer->addMouseWheel(x, y);
+        m_renderer->addMouseWheel(x, y);
     }
     update();
 }
 
 void ImGuiQuickItem::keyPressEvent(QKeyEvent *event)
 {
-    if (s_currentRenderer) {
-        s_currentRenderer->handleKeyEvent(event, true);
+    if (m_renderer) {
+        m_renderer->handleKeyEvent(event, true);
     }
     update();
 }
 
 void ImGuiQuickItem::keyReleaseEvent(QKeyEvent *event)
 {
-    if (s_currentRenderer) {
-        s_currentRenderer->handleKeyEvent(event, false);
+    if (m_renderer) {
+        m_renderer->handleKeyEvent(event, false);
     }
     update();
 }
 
 void ImGuiQuickItem::hoverMoveEvent(QHoverEvent *event)
 {
-    if (s_currentRenderer) {
+    if (m_renderer) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        s_currentRenderer->setMousePos(event->position());
+        m_renderer->setMousePos(event->position());
 #else
-        s_currentRenderer->setMousePos(event->pos());
+        m_renderer->setMousePos(event->pos());
 #endif
     }
     update();

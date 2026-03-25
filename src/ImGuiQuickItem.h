@@ -10,6 +10,7 @@ class ImGuiQuickItem : public QQuickFramebufferObject
 {
     Q_OBJECT
     QML_ELEMENT
+    Q_PROPERTY(bool useGlobalRender READ useGlobalRender WRITE setUseGlobalRender)
 
 public:
     explicit ImGuiQuickItem(QQuickItem *parent = nullptr);
@@ -20,6 +21,9 @@ public:
     using RenderCallback = std::function<void()>;
     void setRenderCallback(RenderCallback callback);
     RenderCallback renderCallback() const { return m_renderCallback; }
+
+    bool useGlobalRender() const { return m_useGlobalRender; }
+    void setUseGlobalRender(bool v) { m_useGlobalRender = v; }
 
 signals:
     void initialized();
@@ -40,8 +44,14 @@ protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 #endif
 
+    /// Per-instance renderer (for multi-instance input dispatch)
+    void setRenderer(class ImGuiQuickItemRenderer* r) { m_renderer = r; }
+    class ImGuiQuickItemRenderer* renderer() const { return m_renderer; }
+
 private:
     RenderCallback m_renderCallback;
+    bool m_useGlobalRender = true;
+    class ImGuiQuickItemRenderer* m_renderer = nullptr;
     friend class ImGuiQuickItemRenderer;
 };
 
