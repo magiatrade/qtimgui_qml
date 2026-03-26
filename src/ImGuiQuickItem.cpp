@@ -94,6 +94,7 @@ public:
         , g_VaoHandle(0)
         , g_ElementsHandle(0)
         , g_ctx(nullptr)
+        , g_plotCtx(nullptr)
         , m_initialized(false)
     {
         for (int i = 0; i < 3; i++) {
@@ -104,7 +105,10 @@ public:
     ~ImGuiQuickItemRenderer() override
     {
         if (g_ctx) {
-            ImPlot::DestroyContext();
+            if (g_plotCtx) {
+                ImPlot::SetCurrentContext(g_plotCtx);
+                ImPlot::DestroyContext(g_plotCtx);
+            }
             ImGui::DestroyContext(g_ctx);
         }
     }
@@ -117,7 +121,8 @@ public:
 
         g_ctx = ImGui::CreateContext();
         ImGui::SetCurrentContext(g_ctx);
-        ImPlot::CreateContext();
+        if (g_plotCtx) ImPlot::SetCurrentContext(g_plotCtx);
+        g_plotCtx = ImPlot::CreateContext();
 
         ImGuiIO &io = ImGui::GetIO();
         io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
@@ -142,6 +147,7 @@ public:
     bool createFontsTexture()
     {
         ImGui::SetCurrentContext(g_ctx);
+        if (g_plotCtx) ImPlot::SetCurrentContext(g_plotCtx);
 
         ImGuiIO& io = ImGui::GetIO();
         unsigned char* pixels;
@@ -165,6 +171,7 @@ public:
     bool createDeviceObjects()
     {
         ImGui::SetCurrentContext(g_ctx);
+        if (g_plotCtx) ImPlot::SetCurrentContext(g_plotCtx);
 
         GLint last_texture, last_array_buffer, last_vertex_array;
         glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
@@ -243,6 +250,7 @@ public:
     void renderDrawList(ImDrawData *draw_data)
     {
         ImGui::SetCurrentContext(g_ctx);
+        if (g_plotCtx) ImPlot::SetCurrentContext(g_plotCtx);
 
         const ImGuiIO& io = ImGui::GetIO();
         int fb_width = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
@@ -350,6 +358,7 @@ public:
         if (!m_item) return;
 
         ImGui::SetCurrentContext(g_ctx);
+        if (g_plotCtx) ImPlot::SetCurrentContext(g_plotCtx);
 
         ImGuiIO& io = ImGui::GetIO();
 
@@ -392,6 +401,7 @@ public:
 
         // Copy mouse position from item
         ImGui::SetCurrentContext(g_ctx);
+        if (g_plotCtx) ImPlot::SetCurrentContext(g_plotCtx);
         ImGuiIO& io = ImGui::GetIO();
         io.MousePos = ImVec2(m_mousePos.x(), m_mousePos.y());
     }
@@ -409,15 +419,6 @@ public:
         // Call the render callback if set (per-instance)
         bool hasCallback = (bool)m_item->renderCallback();
         bool useGlobal = m_item->useGlobalRender();
-
-        static int dbgCount = 0;
-        if (dbgCount++ % 600 == 0) {
-            QString name = m_item->objectName();
-            qDebug() << "ImGuiQuickItem::render" << name
-                     << "hasCallback=" << hasCallback
-                     << "useGlobal=" << useGlobal
-                     << "size=" << m_item->width() << "x" << m_item->height();
-        }
 
         if (hasCallback) {
             m_item->renderCallback()();
@@ -456,6 +457,7 @@ public:
         if (!g_ctx) return;
 
         ImGui::SetCurrentContext(g_ctx);
+        if (g_plotCtx) ImPlot::SetCurrentContext(g_plotCtx);
         ImGuiIO& io = ImGui::GetIO();
 
         // Handle modifier keys using the new API
@@ -499,6 +501,7 @@ private:
     int g_AttribLocationPosition, g_AttribLocationUV, g_AttribLocationColor;
     unsigned int g_VboHandle, g_VaoHandle, g_ElementsHandle;
     ImGuiContext* g_ctx;
+    ImPlotContext* g_plotCtx;
     bool m_initialized;
 };
 
