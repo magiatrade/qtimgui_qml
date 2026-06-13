@@ -1,6 +1,7 @@
 [submodule "imgui"]
 	path = modules/imgui
-	url = https://github.com/ocornut/imgui.git
+	url = git@github.com:magiatrade/imgui.git
+	branch = magia-docking
 [submodule "implot"]
 	path = modules/implot
 	url = https://github.com/epezent/implot.git
