@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QByteArray>
 #include <QQuickFramebufferObject>
 #include <QOpenGLFramebufferObject>
 #include <functional>
@@ -17,6 +18,12 @@ public:
     ~ImGuiQuickItem() override;
 
     Renderer *createRenderer() const override;
+
+    /// Fonte TTF pro atlas do ImGui (todas as instâncias). Chamar ANTES dos
+    /// itens serem criados. Sem isso o ImGui usa a ProggyClean embutida —
+    /// bitmap 13px que fica pixelado/borrado em telas retina (o atlas é
+    /// rasterizado em sizePt * devicePixelRatio e exibido em sizePt lógico).
+    static void setDefaultFont(const QByteArray &ttfData, float sizePt = 13.0f);
 
     using RenderCallback = std::function<void()>;
     void setRenderCallback(RenderCallback callback);

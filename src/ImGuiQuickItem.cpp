@@ -9,6 +9,7 @@
 #include <QKeyEvent>
 #include <QCursor>
 #include <QGuiApplication>
+#include <QScreen>
 #include <QClipboard>
 #include <QDateTime>
 #include <QTimer>
@@ -34,6 +35,18 @@
 #endif
 
 namespace QtImGui {
+
+// Fonte custom do atlas (compartilhada entre todas as instâncias). O QByteArray
+// estático é o DONO dos bytes (FontDataOwnedByAtlas=false) — o atlas só aponta.
+static QByteArray g_customFontData;
+static float g_customFontSizePt = 13.0f;
+
+void ImGuiQuickItem::setDefaultFont(const QByteArray &ttfData, float sizePt)
+{
+    g_customFontData = ttfData;
+    g_customFontSizePt = sizePt;
+}
+
 
 // Global custom render function pointer - can be set by application
 void (*g_customRenderFunc)() = nullptr;
@@ -150,6 +163,26 @@ public:
         if (g_plotCtx) ImPlot::SetCurrentContext(g_plotCtx);
 
         ImGuiIO& io = ImGui::GetIO();
+
+        // Fonte custom: rasteriza em sizePt * dpr (nítida em retina) e exibe
+        // em sizePt lógico via FontGlobalScale. Sem custom = ProggyClean 13px.
+        if (!g_customFontData.isEmpty()) {
+            const qreal dpr = (m_item && m_item->window())
+                ? m_item->window()->devicePixelRatio()
+                : (QGuiApplication::primaryScreen()
+                       ? QGuiApplication::primaryScreen()->devicePixelRatio() : 1.0);
+            ImFontConfig cfg;
+            cfg.FontDataOwnedByAtlas = false;   // bytes vivem no QByteArray estático
+            cfg.OversampleH = 2;
+            cfg.OversampleV = 2;
+            io.Fonts->Clear();
+            io.Fonts->AddFontFromMemoryTTF(
+                const_cast<char*>(g_customFontData.constData()),
+                g_customFontData.size(),
+                g_customFontSizePt * float(dpr), &cfg);
+            io.FontGlobalScale = 1.0f / float(dpr);
+        }
+
         unsigned char* pixels;
         int width, height;
         io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
